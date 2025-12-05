@@ -3,105 +3,150 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sistema Yngrid - Nuvem</title>
+    <title>Sistema Pastelaria - Nuvem</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 
     <style>
-        body { background-color: #f0f2f5; padding: 20px; font-family: 'Inter', sans-serif; }
-        .card { border-radius: 16px; }
-        #displayTotal { font-weight: bold; }
-        .chart-container { margin-top: 40px; }
+        body { background-color: #f0f2f5; padding: 20px; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+        .card { border-radius: 12px; }
+        .metric-card { border-radius: 10px; }
+        canvas { background: #fff; border-radius: 8px; padding: 12px; }
+        .small-muted { color: #6c757d; font-size: .9rem; }
     </style>
 </head>
 <body>
-<div class="container" style="max-width: 900px;">
+<div class="container" style="max-width: 1000px;">
     <h2 class="text-center mb-4 fw-bold">☁️ Pedidos Conectados</h2>
 
-    <div class="card p-4 shadow-sm">
+    <div class="card p-4 shadow-sm mb-4">
         <form id="orderForm">
             <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-6 mb-2">
                     <label class="form-label">Cliente</label>
                     <input type="text" class="form-control" name="cliente" id="cliente" required />
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 mb-2">
                     <label class="form-label">Telefone</label>
-                    <input type="text" class="form-control" name="telefone" id="telefone" />
+                    <input type="text" class="form-control" name="telefone" id="telefone" placeholder="(00) 00000-0000" />
                 </div>
             </div>
 
             <hr />
 
-            <div class="row g-3">
+            <div class="row g-3 align-items-end">
                 <div class="col-6 col-md-3">
                     <label class="form-label">Qtd Trad</label>
-                    <input type="number" class="form-control" name="qtdTrad" id="qtdTrad" value="0" />
+                    <input type="number" class="form-control" name="qtdTrad" id="qtdTrad" value="0" min="0" />
                 </div>
                 <div class="col-6 col-md-3">
-                    <label class="form-label">Valor (R$)</label>
-                    <input type="number" step="0.01" class="form-control" name="valTrad" id="valTrad" value="2.50" />
+                    <label class="form-label">Valor Trad (R$)</label>
+                    <input type="number" step="0.01" class="form-control" name="valTrad" id="valTrad" value="2.50" min="0" />
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label">Qtd Rech</label>
-                    <input type="number" class="form-control" name="qtdRech" id="qtdRech" value="0" />
+                    <input type="number" class="form-control" name="qtdRech" id="qtdRech" value="0" min="0" />
                 </div>
                 <div class="col-6 col-md-3">
-                    <label class="form-label">Valor (R$)</label>
-                    <input type="number" step="0.01" class="form-control" name="valRech" id="valRech" value="3.50" />
+                    <label class="form-label">Valor Rech (R$)</label>
+                    <input type="number" step="0.01" class="form-control" name="valRech" id="valRech" value="3.50" min="0" />
                 </div>
             </div>
 
             <div class="mt-4 d-flex justify-content-between align-items-center">
-                <h4 class="text-success" id="displayTotal">Total: R$ 0,00</h4>
-                <button type="submit" class="btn btn-primary btn-lg" id="btnSalvar">💾 Salvar Pedido</button>
+                <div>
+                    <div class="small-muted">Total do pedido</div>
+                    <h4 class="text-success" id="displayTotal">R$ 0,00</h4>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary btn-lg me-2" id="btnSalvar">💾 Salvar Pedido</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnAtualizar">🔄 Atualizar Gráficos</button>
+                </div>
             </div>
 
             <div class="text-center mt-2 loading" id="loadingMsg" style="display:none;">
                 <div class="spinner-border text-primary" role="status"></div>
-                <span> Enviando para a nuvem...</span>
+                <span class="ms-2">Enviando para a nuvem...</span>
             </div>
         </form>
     </div>
 
-    <div class="chart-container">
-        <h4 class="text-center mt-4">📊 Insights dos Pedidos</h4>
-        <canvas id="chartSabores"></canvas>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="card p-3 metric-card mb-2 shadow-sm">
+                <h6 class="mb-1">Total Vendido (unidades)</h6>
+                <div id="metricTotalUnidades" class="h4">0</div>
+                <div class="small-muted">Soma de todas as unidades vendidas</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 metric-card mb-2 shadow-sm">
+                <h6 class="mb-1">Faturamento Total (R$)</h6>
+                <div id="metricFaturamento" class="h4">R$ 0,00</div>
+                <div class="small-muted">Total recebido</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 metric-card mb-2 shadow-sm">
+                <h6 class="mb-1">Ticket Médio (R$)</h6>
+                <div id="metricTicket" class="h4">R$ 0,00</div>
+                <div class="small-muted">Faturamento / Nº de pedidos</div>
+            </div>
+        </div>
     </div>
 
-    <div class="text-center mt-4">
+    <div class="card p-3 shadow-sm mb-4">
+        <h5 class="mb-3">Gráficos</h5>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <canvas id="chartSabores" aria-label="Gráfico de sabores"></canvas>
+            </div>
+            <div class="col-md-6 mb-3">
+                <canvas id="chartFaturamentoProduto" aria-label="Faturamento por produto"></canvas>
+            </div>
+            <div class="col-md-6 mb-3">
+                <canvas id="chartFaturamentoDia" aria-label="Faturamento por dia"></canvas>
+            </div>
+            <div class="col-md-6 mb-3">
+                <canvas id="chartTicketMedio" aria-label="Ticket medio"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mb-5">
         <a href="https://docs.google.com/spreadsheets/d/1e9lVttCi1qwF-jl0qcTAA7U2DaG_DIw02eb9HIoDwJ8/edit?usp=sharing" target="_blank" class="btn btn-outline-success">📊 Ver Planilha Completa</a>
     </div>
 </div>
 
 <script>
-// Máscara telefone
+// ---------- Configs iniciais ----------
 $(document).ready(function() {
     $('#telefone').mask('(00) 00000-0000');
 });
 
-// URL Google Script
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQpdvxr1IstRuKEAm_87S6yI3PZFatg9GFZ5JtoiQ2m5GjsciAfPTI83KGogvLXiBkiw/exec";
 
 const form = document.getElementById('orderForm');
+const btnAtualizar = document.getElementById('btnAtualizar');
+
 form.addEventListener('input', calcularTotal);
+btnAtualizar.addEventListener('click', atualizarGraficos);
 
 function calcularTotal() {
-    const qtdTrad = document.getElementById('qtdTrad').value * 1;
-    const valTrad = document.getElementById('valTrad').value * 1;
-    const qtdRech = document.getElementById('qtdRech').value * 1;
-    const valRech = document.getElementById('valRech').value * 1;
+    const qtdTrad = Number(document.getElementById('qtdTrad').value || 0);
+    const valTrad = Number(document.getElementById('valTrad').value || 0);
+    const qtdRech = Number(document.getElementById('qtdRech').value || 0);
+    const valRech = Number(document.getElementById('valRech').value || 0);
 
     const total = (qtdTrad * valTrad) + (qtdRech * valRech);
-    document.getElementById('displayTotal').innerText = "Total: R$ " + total.toFixed(2);
+    document.getElementById('displayTotal').innerText = 'R$ ' + total.toFixed(2);
     return total;
 }
 
-form.addEventListener('submit', e => {
+form.addEventListener('submit', async e => {
     e.preventDefault();
-
     const btn = document.getElementById('btnSalvar');
     const loading = document.getElementById('loadingMsg');
     const total = calcularTotal();
@@ -114,44 +159,128 @@ form.addEventListener('submit', e => {
     const data = new FormData(form);
     data.append('total', total);
 
-    fetch(SCRIPT_URL, { method: 'POST', body: data })
-        .then(response => {
-            alert("✅ Pedido salvo na nuvem com sucesso!");
-            atualizarGraficos();
-            form.reset();
-            calcularTotal();
-        })
-        .catch(error => {
-            alert("❌ Erro ao salvar. Verifique sua conexão.");
-        })
-        .finally(() => {
-            btn.disabled = false;
-            loading.style.display = 'none';
-        });
+    try {
+        const resp = await fetch(SCRIPT_URL, { method: 'POST', body: data });
+        if (!resp.ok) throw new Error('Erro no envio: ' + resp.status);
+        // opcionalmente processar resposta
+        alert('✅ Pedido salvo na nuvem com sucesso!');
+        form.reset();
+        calcularTotal();
+        await atualizarGraficos();
+    } catch (err) {
+        console.error('Erro ao enviar pedido:', err);
+        alert('❌ Erro ao salvar. Verifique sua conexão.');
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
 });
 
-// Gráfico de sabores - valores fictícios (pode puxar da planilha futuramente)
-let chart;
-function atualizarGraficos() {
-    const ctx = document.getElementById('chartSabores');
+// ---------- Charts (uma única função) ----------
+let chartSabores = null;
+let chartFaturamentoDia = null;
+let chartTicketMedio = null;
+let chartFaturProduto = null;
 
-    const dados = {
-        labels: ['Tradicional', 'Recheado'],
-        datasets: [{ data: [qtdTrad.value, qtdRech.value] }]
-    };
+async function atualizarGraficos() {
+    // busca dados da planilha (espera-se que o Script retorne JSON array)
+    try {
+        const res = await fetch(SCRIPT_URL + '?mode=read');
+        if (!res.ok) throw new Error('Resposta não OK: ' + res.status);
+        const dados = await res.json();
 
-    if (chart) chart.destroy();
+        // estrutura padrão esperada: { data, cliente, telefone, qtdTrad, valTrad, qtdRech, valRech, total }
+        // defensivamente limpa/normaliza os dados
+        const rows = Array.isArray(dados) ? dados : [];
 
-    chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: dados,
-        options: {
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
+        // métricas
+        const totalTrad = rows.reduce((s, r) => s + Number(r.qtdTrad || 0), 0);
+        const totalRech = rows.reduce((s, r) => s + Number(r.qtdRech || 0), 0);
+        const totalUnidades = totalTrad + totalRech;
+
+        let faturamentoPorDia = {};
+        let faturamentoTotal = 0;
+        rows.forEach(r => {
+            const dia = (r.data || '').split(' ')[0] || 'Sem Data';
+            const valor = Number(r.total || 0);
+            faturamentoPorDia[dia] = (faturamentoPorDia[dia] || 0) + valor;
+            faturamentoTotal += valor;
+        });
+
+        const ticketMedio = rows.length ? (faturamentoTotal / rows.length) : 0;
+
+        document.getElementById('metricTotalUnidades').innerText = totalUnidades;
+        document.getElementById('metricFaturamento').innerText = 'R$ ' + faturamentoTotal.toFixed(2);
+        document.getElementById('metricTicket').innerText = 'R$ ' + ticketMedio.toFixed(2);
+
+        // destrói charts antigos
+        if (chartSabores) chartSabores.destroy();
+        if (chartFaturamentoDia) chartFaturamentoDia.destroy();
+        if (chartTicketMedio) chartTicketMedio.destroy();
+        if (chartFaturProduto) chartFaturProduto.destroy();
+
+        // Chart - Sabores
+        const ctxSab = document.getElementById('chartSabores').getContext('2d');
+        chartSabores = new Chart(ctxSab, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tradicional', 'Recheado'],
+                datasets: [{ data: [totalTrad, totalRech] }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // Chart - Faturamento por produto (valor)
+        const faturamentoTrad = rows.reduce((s, r) => s + (Number(r.qtdTrad || 0) * Number(r.valTrad || 0)), 0);
+        const faturamentoRech = rows.reduce((s, r) => s + (Number(r.qtdRech || 0) * Number(r.valRech || 0)), 0);
+        const ctxProd = document.getElementById('chartFaturamentoProduto').getContext('2d');
+        chartFaturProduto = new Chart(ctxProd, {
+            type: 'bar',
+            data: { labels: ['Tradicional', 'Recheado'], datasets: [{ label: 'Faturamento (R$)', data: [faturamentoTrad, faturamentoRech] }] },
+            options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        });
+
+        // Chart - Faturamento por dia
+        const dias = Object.keys(faturamentoPorDia).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+        const valoresDia = dias.map(d => faturamentoPorDia[d]);
+        const ctxDia = document.getElementById('chartFaturamentoDia').getContext('2d');
+        chartFaturamentoDia = new Chart(ctxDia, {
+            type: 'bar',
+            data: { labels: dias, datasets: [{ label: 'Faturamento (R$)', data: valoresDia }] },
+            options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        });
+
+        // Chart - Ticket médio
+        const ctxTick = document.getElementById('chartTicketMedio').getContext('2d');
+        chartTicketMedio = new Chart(ctxTick, {
+            type: 'bar',
+            data: { labels: ['Ticket Médio'], datasets: [{ data: [ticketMedio] }] },
+            options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        });
+
+    } catch (err) {
+        console.error('Erro ao carregar dados dos gráficos:', err);
+        // fallback visual simples: limpa métricas e desenha charts vazios
+        document.getElementById('metricTotalUnidades').innerText = '—';
+        document.getElementById('metricFaturamento').innerText = 'R$ 0,00';
+        document.getElementById('metricTicket').innerText = 'R$ 0,00';
+
+        try { if (chartSabores) chartSabores.destroy(); } catch(_){}
+        try { if (chartFaturProduto) chartFaturProduto.destroy(); } catch(_){}
+        try { if (chartFaturamentoDia) chartFaturamentoDia.destroy(); } catch(_){}
+        try { if (chartTicketMedio) chartTicketMedio.destroy(); } catch(_){}
+
+        // desenha um placeholder mínimo para cada canvas para não deixar a UI quebrada
+        const emptyData = { labels: ['-'], datasets: [{ data: [1] }] };
+        try { new Chart(document.getElementById('chartSabores').getContext('2d'), { type: 'doughnut', data: emptyData }); } catch(_){}
+        try { new Chart(document.getElementById('chartFaturamentoProduto').getContext('2d'), { type: 'bar', data: emptyData }); } catch(_){}
+        try { new Chart(document.getElementById('chartFaturamentoDia').getContext('2d'), { type: 'bar', data: emptyData }); } catch(_){}
+        try { new Chart(document.getElementById('chartTicketMedio').getContext('2d'), { type: 'bar', data: emptyData }); } catch(_){}
+    }
 }
+
+// inicializa ao carregar
+atualizarGraficos();
 </script>
 
 </body>
