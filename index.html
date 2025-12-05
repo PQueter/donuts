@@ -1,125 +1,158 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Pastelaria - Nuvem</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema Yngrid - Nuvem</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
     <style>
-        body { background-color: #f0f2f5; padding: 20px; }
-        .loading { display: none; }
+        body { background-color: #f0f2f5; padding: 20px; font-family: 'Inter', sans-serif; }
+        .card { border-radius: 16px; }
+        #displayTotal { font-weight: bold; }
+        .chart-container { margin-top: 40px; }
     </style>
 </head>
 <body>
-
-<div class="container" style="max-width: 800px;">
-    <h2 class="text-center mb-4">☁️ Pedidos Conectados</h2>
+<div class="container" style="max-width: 900px;">
+    <h2 class="text-center mb-4 fw-bold">☁️ Pedidos Conectados</h2>
 
     <div class="card p-4 shadow-sm">
         <form id="orderForm">
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Cliente</label>
-                    <input type="text" class="form-control" name="cliente" id="cliente" required>
+                    <input type="text" class="form-control" name="cliente" id="cliente" required />
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Telefone</label>
-                    <input type="text" class="form-control" name="telefone" id="telefone">
+                    <input type="text" class="form-control" name="telefone" id="telefone" />
                 </div>
             </div>
 
-            <hr>
+            <hr />
 
             <div class="row g-3">
                 <div class="col-6 col-md-3">
                     <label class="form-label">Qtd Trad</label>
-                    <input type="number" class="form-control" name="qtdTrad" id="qtdTrad" value="0">
+                    <input type="number" class="form-control" name="qtdTrad" id="qtdTrad" value="0" />
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label">Valor (R$)</label>
-                    <input type="number" step="0.01" class="form-control" name="valTrad" id="valTrad" value="2.50">
+                    <input type="number" step="0.01" class="form-control" name="valTrad" id="valTrad" value="2.50" />
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label">Qtd Rech</label>
-                    <input type="number" class="form-control" name="qtdRech" id="qtdRech" value="0">
+                    <input type="number" class="form-control" name="qtdRech" id="qtdRech" value="0" />
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label">Valor (R$)</label>
-                    <input type="number" step="0.01" class="form-control" name="valRech" id="valRech" value="3.50">
+                    <input type="number" step="0.01" class="form-control" name="valRech" id="valRech" value="3.50" />
                 </div>
             </div>
 
             <div class="mt-4 d-flex justify-content-between align-items-center">
                 <h4 class="text-success" id="displayTotal">Total: R$ 0,00</h4>
-                <button type="submit" class="btn btn-primary btn-lg" id="btnSalvar">
-                    💾 Salvar Pedido
-                </button>
+                <button type="submit" class="btn btn-primary btn-lg" id="btnSalvar">💾 Salvar Pedido</button>
             </div>
-            <div class="text-center mt-2 loading" id="loadingMsg">
+
+            <div class="text-center mt-2 loading" id="loadingMsg" style="display:none;">
                 <div class="spinner-border text-primary" role="status"></div>
                 <span> Enviando para a nuvem...</span>
             </div>
         </form>
     </div>
-    
+
+    <div class="chart-container">
+        <h4 class="text-center mt-4">📊 Insights dos Pedidos</h4>
+        <canvas id="chartSabores"></canvas>
+    </div>
+
     <div class="text-center mt-4">
-        <a href="https://docs.google.com/spreadsheets/d/1e9lVttCi1qwF-jl0qcTAA7U2DaG_DIw02eb9HIoDwJ8/edit?usp=sharing" target="_blank" class="btn btn-outline-success">📊 Ver Planilha e Gráficos</a>
+        <a href="https://docs.google.com/spreadsheets/d/1e9lVttCi1qwF-jl0qcTAA7U2DaG_DIw02eb9HIoDwJ8/edit?usp=sharing" target="_blank" class="btn btn-outline-success">📊 Ver Planilha Completa</a>
     </div>
 </div>
 
 <script>
-    // ******************************************************
-    // COLE SUA URL DO GOOGLE SCRIPT ABAIXO (MANTENHA AS ASPAS)
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQpdvxr1IstRuKEAm_87S6yI3PZFatg9GFZ5JtoiQ2m5GjsciAfPTI83KGogvLXiBkiw/exec"; 
-    // ******************************************************
+// Máscara telefone
+$(document).ready(function() {
+    $('#telefone').mask('(00) 00000-0000');
+});
 
-    const form = document.getElementById('orderForm');
-    
-    // Atualiza o total visualmente enquanto digita
-    form.addEventListener('input', calcularTotal);
+// URL Google Script
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQpdvxr1IstRuKEAm_87S6yI3PZFatg9GFZ5JtoiQ2m5GjsciAfPTI83KGogvLXiBkiw/exec";
 
-    function calcularTotal() {
-        const qtdTrad = document.getElementById('qtdTrad').value * 1;
-        const valTrad = document.getElementById('valTrad').value * 1;
-        const qtdRech = document.getElementById('qtdRech').value * 1;
-        const valRech = document.getElementById('valRech').value * 1;
-        
-        const total = (qtdTrad * valTrad) + (qtdRech * valRech);
-        document.getElementById('displayTotal').innerText = "Total: R$ " + total.toFixed(2);
-        return total;
-    }
+const form = document.getElementById('orderForm');
+form.addEventListener('input', calcularTotal);
 
-    form.addEventListener('submit', e => {
-        e.preventDefault();
-        
-        const btn = document.getElementById('btnSalvar');
-        const loading = document.getElementById('loadingMsg');
-        const total = calcularTotal();
+function calcularTotal() {
+    const qtdTrad = document.getElementById('qtdTrad').value * 1;
+    const valTrad = document.getElementById('valTrad').value * 1;
+    const qtdRech = document.getElementById('qtdRech').value * 1;
+    const valRech = document.getElementById('valRech').value * 1;
 
-        if (total === 0) { alert('O pedido está vazio!'); return; }
+    const total = (qtdTrad * valTrad) + (qtdRech * valRech);
+    document.getElementById('displayTotal').innerText = "Total: R$ " + total.toFixed(2);
+    return total;
+}
 
-        btn.disabled = true;
-        loading.style.display = 'block';
+form.addEventListener('submit', e => {
+    e.preventDefault();
 
-        // Prepara dados para envio
-        const data = new FormData(form);
-        data.append('total', total); // Adiciona o total calculado
+    const btn = document.getElementById('btnSalvar');
+    const loading = document.getElementById('loadingMsg');
+    const total = calcularTotal();
 
-        fetch(SCRIPT_URL, { method: 'POST', body: data })
-            .then(response => {
-                alert("✅ Pedido salvo na nuvem com sucesso!");
-                form.reset();
-                calcularTotal(); // Zera o visual do total
-            })
-            .catch(error => {
-                console.error('Erro!', error.message);
-                alert("❌ Erro ao salvar. Verifique sua conexão.");
-            })
-            .finally(() => {
-                btn.disabled = false;
-                loading.style.display = 'none';
-            });
+    if (total === 0) { alert('O pedido está vazio!'); return; }
+
+    btn.disabled = true;
+    loading.style.display = 'block';
+
+    const data = new FormData(form);
+    data.append('total', total);
+
+    fetch(SCRIPT_URL, { method: 'POST', body: data })
+        .then(response => {
+            alert("✅ Pedido salvo na nuvem com sucesso!");
+            atualizarGraficos();
+            form.reset();
+            calcularTotal();
+        })
+        .catch(error => {
+            alert("❌ Erro ao salvar. Verifique sua conexão.");
+        })
+        .finally(() => {
+            btn.disabled = false;
+            loading.style.display = 'none';
+        });
+});
+
+// Gráfico de sabores - valores fictícios (pode puxar da planilha futuramente)
+let chart;
+function atualizarGraficos() {
+    const ctx = document.getElementById('chartSabores');
+
+    const dados = {
+        labels: ['Tradicional', 'Recheado'],
+        datasets: [{ data: [qtdTrad.value, qtdRech.value] }]
+    };
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: dados,
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
     });
+}
 </script>
+
 </body>
 </html>
